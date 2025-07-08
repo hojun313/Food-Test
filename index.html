@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나의 소울 푸드 찾기</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Cream & Coral -->
+    <!-- Application Structure Plan: The application uses a simple and intuitive three-view SPA structure (Start -> Quiz -> Result). This linear progression is ideal for a quiz, guiding the user from introduction to their personalized outcome without any confusion. The Start screen sets a fun, engaging tone. The Quiz screen presents one question at a time with large, clickable image-based options to make it mobile-friendly and visually appealing. The Result screen delivers the payoff with a large image and a fun, shareable personality description, encouraging user satisfaction and social engagement. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Quiz questions and answer options. -> Goal: Collect user preferences in a fun way. -> Viz/Method: Full-width clickable cards with text. -> Interaction: User taps/clicks an option to answer and automatically proceed. -> Justification: This is more engaging and touch-friendly than standard radio buttons, creating a smoother user flow.
+        - Report Info: Final soul food result. -> Goal: Deliver a personalized, visually appealing result. -> Viz/Method: A dedicated result block with a large placeholder image and styled text. -> Interaction: Static reading and a "Try Again" button. -> Justification: For a personality-style quiz, a single, thematic result is more impactful than a data chart. It provides a clear, satisfying conclusion that feels personal to the user.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Jua', sans-serif;
+            background-color: #FFF9F2; /* Creamy White */
+        }
+        .main-title {
+            color: #FF6B6B; /* Coral Red */
+        }
+        .btn-primary {
+            background-color: #FF6B6B;
+            color: #FFFFFF;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+        .progress-bar-fill {
+            background-color: #FFD166; /* Sunny Yellow */
+            transition: width 0.4s ease-in-out;
+        }
+        .option-card {
+            background-color: #FFFFFF;
+            border: 2px solid #F0F0F0;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .option-card:hover {
+            transform: translateY(-5px);
+            border-color: #FFD166;
+        }
+        .result-card {
+            background-color: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <main class="w-full max-w-2xl mx-auto text-center">
+
+        <!-- Start Screen -->
+        <section id="start-screen" class="p-8">
+            <h1 class="text-5xl font-bold main-title mb-4">오늘 나의 소울 푸드는?</h1>
+            <p class="text-xl text-gray-600 mb-10">
+                몇 가지 질문에 답하고<br>지금 당신에게 꼭 필요한 음식을 찾아보세요!
+            </p>
+            <button id="start-btn" class="btn-primary text-2xl font-bold py-4 px-16 rounded-full">
+                시작하기!
+            </button>
+        </section>
+
+        <!-- Quiz Screen -->
+        <section id="quiz-screen" class="hidden">
+            <div class="w-full bg-gray-200 rounded-full h-3 mb-6">
+                <div id="progress-bar" class="progress-bar-fill h-3 rounded-full" style="width: 0%"></div>
+            </div>
+            <h2 id="question-text" class="text-3xl font-bold text-gray-700 mb-8 h-24 flex items-center justify-center"></h2>
+            <div id="options-container" class="grid grid-cols-2 gap-4">
+                <!-- Options will be generated here -->
+            </div>
+        </section>
+
+        <!-- Results Screen -->
+        <section id="results-screen" class="hidden p-4">
+            <div class="result-card p-8">
+                <p class="text-gray-600 text-xl mb-2">오늘 당신의 소울 푸드는 바로...</p>
+                <h2 id="result-title" class="text-5xl font-bold main-title mb-6"></h2>
+                <img id="result-image" src="" alt="소울 푸드 이미지" class="w-full h-64 object-cover rounded-lg mb-6 shadow-lg">
+                <p id="result-description" class="text-xl text-gray-700 mb-10"></p>
+                <button id="restart-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 text-xl font-bold py-3 px-12 rounded-full transition-colors">
+                    다시하기
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const quizData = {
+                questions: [
+                    {
+                        text: "오늘 하루를 한마디로?",
+                        options: [ { text: "열정", type: "tteokbokki" }, { text: "힐링", type: "cake" }, { text: "파티", type: "chicken" }, { text: "안정", type: "gukbap" } ]
+                    },
+                    {
+                        text: "요즘 당신이 끌리는 스타일은?",
+                        options: [ { text: "힙스터", type: "pizza" }, { text: "미니멀리즘", type: "salad" }, { text: "럭셔리", type: "steak" }, { text: "내추럴", type: "pasta" } ]
+                    },
+                    {
+                        text: "친구가 고민을 털어놓을 때 나는?",
+                        options: [ { text: "'일단 먹고 얘기해'", type: "samgyeopsal" }, { text: "'다 괜찮아질거야'", type: "icecream" }, { text: "'내가 해결해줄게!'", type: "hamburger" }, { text: "'가만히 들어준다'", type: "kimchijjigae" } ]
+                    },
+                    {
+                        text: "갑자기 떠나게 된 여행지는?",
+                        options: [ { text: "새로운 도전! 익스트림 스포츠", type: "maratang" }, { text: "감성 가득한 예술가의 도시", type: "pasta" }, { text: "알려지지 않은 숨은 맛집 탐방", type: "gopchang" }, { text: "깊은 산 속의 조용한 사찰", type: "sushi" } ]
+                    },
+                    {
+                        text: "혼자 집에 있을 때 주로 뭐해?",
+                        options: [ { text: "나만의 레시피로 요리하기", type: "ramyeon" }, { text: "밀린 드라마 정주행", type: "chicken" }, { text: "SNS 핫플 검색", type: "pizza" }, { text: "이불 속에서 뒹굴뒹굴", type: "gukbap" } ]
+                    },
+                    {
+                        text: "내일 지구가 멸망한다면 마지막 식사는?",
+                        options: [ { text: "세상에서 가장 비싼 음식", type: "steak" }, { text: "엄마가 해준 집밥", type: "kimchijjigae" }, { text: "사랑하는 사람과 함께라면 뭐든", type: "pasta" }, { text: "세상에서 제일 자극적인 음식", type: "maratang" } ]
+                    },
+                    {
+                        text: "나의 소비 습관에 가깝다면?",
+                        options: [ { text: "가성비 최고!", type: "hamburger" }, { text: "일단 예쁘면 지른다", type: "cake" }, { text: "계획적인 소비", type: "salad" }, { text: "남들 다 사는 건 사야지", type: "tteokbokki" } ]
+                    },
+                    {
+                        text: "내가 선호하는 팀플 스타일은?",
+                        options: [ { text: "내가 다 이끌어가는 리더", type: "steak" }, { text: "분위기 메이커, 아이디어 뱅크", type: "chicken" }, { text: "묵묵히 내 할 일을 하는 조용한 일꾼", type: "sushi" }, { text: "모두의 의견을 종합하는 중재자", type: "samgyeopsal" } ]
+                    },
+                    {
+                        text: "나의 진짜 매력 포인트는?",
+                        options: [ { text: "알 수 없는 엉뚱함", type: "ramyeon" }, { text: "보기만 해도 기분 좋아지는 미소", type: "icecream" }, { text: "은근한 고집과 전문성", type: "gopchang" }, { text: "누구와도 잘 지내는 친화력", type: "samgyeopsal" } ]
+                    },
+                    {
+                        text: "갖고 싶은 초능력이 있다면?",
+                        options: [ { text: "순간이동", type: "hamburger" }, { text: "미래 예측", type: "salad" }, { text: "투명인간", type: "gopchang" }, { text: "하늘을 나는 능력", type: "pizza" } ]
+                    }
+                ],
+                results: {
+                    tteokbokki: { title: "매콤한 떡볶이", description: "열정적이고 화끈한 당신! 스트레스는 매운 떡볶이로 시원하게 날려버리세요. 오늘 당신의 열정을 응원합니다!", image: "https://placehold.co/600x400/FF6B6B/FFFFFF?text=떡볶이" },
+                    cake: { title: "달콤한 케이크", description: "다정하고 섬세한 당신! 지친 마음에 달콤한 케이크로 위로와 행복을 선물하세요. 오늘 하루도 정말 수고 많았어요.", image: "https://placehold.co/600x400/FFD166/FFFFFF?text=케이크" },
+                    chicken: { title: "바삭한 치킨", description: "유쾌하고 사교적인 당신! 친구들과 함께 즐기는 치킨처럼, 당신은 주변에 즐거움을 주는 존재예요. 오늘 밤, 치킨 파티 어때요?", image: "https://placehold.co/600x400/4ECDC4/FFFFFF?text=치킨" },
+                    gukbap: { title: "든든한 국밥", description: "따뜻하고 진중한 당신! 든든한 국밥 한 그릇처럼, 당신은 곁에 있는 사람들에게 믿음과 안정감을 줍니다. 속 편한 하루 보내세요.", image: "https://placehold.co/600x400/A88B79/FFFFFF?text=국밥" },
+                    pizza: { title: "짭짤한 피자", description: "트렌디하고 창의적인 당신! 다양한 토핑이 올라간 피자처럼, 당신은 여러 매력을 가진 사람이에요. 새로운 아이디어가 샘솟는 하루를 보내세요!", image: "https://placehold.co/600x400/9673B8/FFFFFF?text=피자" },
+                    pasta: { title: "분위기 있는 파스타", description: "로맨틱하고 감성적인 당신! 특별한 날을 기념하는 파스타처럼, 당신은 평범한 날도 특별하게 만드는 능력이 있어요. 분위기 있는 저녁 어떠세요?", image: "https://placehold.co/600x400/F28C8C/FFFFFF?text=파스타" },
+                    maratang: { title: "짜릿한 마라탕", description: "스릴을 즐기는 모험가! 얼얼한 마라탕처럼 짜릿한 자극을 즐기는 당신에게, 오늘은 새로운 도전으로 가득한 하루가 될 거예요.", image: "https://placehold.co/600x400/E55039/FFFFFF?text=마라탕" },
+                    sushi: { title: "정갈한 초밥", description: "섬세하고 꼼꼼한 당신! 한 점 한 점 정성이 담긴 초밥처럼, 당신은 모든 일에 신중과 품격을 더하는군요. 차분하고 만족스러운 하루 보내세요.", image: "https://placehold.co/600x400/303952/FFFFFF?text=초밥" },
+                    samgyeopsal: { title: "친근한 삼겹살", description: "사람들과 어울리는 걸 좋아하는 당신! 지글지글 삼겹살처럼, 당신은 모임의 중심에서 분위기를 즐겁게 만들어요. 오늘 저녁 좋은 사람들과 함께하세요!", image: "https://placehold.co/600x400/f39c12/FFFFFF?text=삼겹살" },
+                    hamburger: { title: "클래식 햄버거", description: "효율적이고 실용적인 당신! 언제나 믿고 먹을 수 있는 햄버거처럼, 당신은 가장 확실하고 빠른 길을 알고 있죠. 성공적인 하루를 응원합니다!", image: "https://placehold.co/600x400/e67e22/FFFFFF?text=햄버거" },
+                    ramyeon: { title: "기발한 라면", description: "창의적이고 재치있는 당신! 어떤 재료와도 어울리는 라면처럼, 당신은 어떤 상황에서도 독창적인 아이디어를 내는군요. 기발한 생각이 떠오르는 날이에요!", image: "https://placehold.co/600x400/d35400/FFFFFF?text=라면" },
+                    salad: { title: "상쾌한 샐러드", description: "자기관리가 철저하고 건강을 생각하는 당신! 신선한 샐러드처럼, 당신은 몸과 마음의 건강한 균형을 추구하는군요. 상쾌한 하루 보내세요!", image: "https://placehold.co/600x400/2ecc71/FFFFFF?text=샐러드" },
+                    gopchang: { title: "매력적인 곱창", description: "알면 알수록 진국인 당신! 고소한 곱창처럼, 당신은 숨겨진 매력이 넘치는 사람이에요. 아는 사람만 아는 당신의 진가를 보여주세요!", image: "https://placehold.co/600x400/8e44ad/FFFFFF?text=곱창" },
+                    icecream: { title: "사랑스러운 아이스크림", description: "긍정적이고 순수한 당신! 달콤한 아이스크림처럼, 당신의 존재만으로도 주변이 행복해져요. 기분 좋은 일만 가득할 거예요!", image: "https://placehold.co/600x400/3498db/FFFFFF?text=아이스크림" },
+                    steak: { title: "품격있는 스테이크", description: "야망 있고 성공을 추구하는 당신! 특별한 날을 장식하는 스테이크처럼, 당신은 스스로의 가치를 높일 줄 아는 사람이에요. 목표를 달성하는 하루가 될 거예요!", image: "https://placehold.co/600x400/c0392b/FFFFFF?text=스테이크" },
+                    kimchijjigae: { title: "따뜻한 김치찌개", description: "언제나 곁을 지켜주는 든든한 당신! 한국인의 소울푸드 김치찌개처럼, 당신은 주변 사람들에게 가장 큰 위로와 안정감을 줍니다. 마음 따뜻한 하루 보내세요.", image: "https://placehold.co/600x400/e74c3c/FFFFFF?text=김치찌개" }
+                }
+            };
+
+            const startScreen = document.getElementById('start-screen');
+            const quizScreen = document.getElementById('quiz-screen');
+            const resultsScreen = document.getElementById('results-screen');
+
+            const startBtn = document.getElementById('start-btn');
+            const restartBtn = document.getElementById('restart-btn');
+
+            const progressBar = document.getElementById('progress-bar');
+            const questionText = document.getElementById('question-text');
+            const optionsContainer = document.getElementById('options-container');
+
+            const resultTitle = document.getElementById('result-title');
+            const resultImage = document.getElementById('result-image');
+            const resultDescription = document.getElementById('result-description');
+
+            let currentQuestionIndex = 0;
+            let scores = {};
+
+            function initializeScores() {
+                scores = {};
+                for (const type in quizData.results) {
+                    scores[type] = 0;
+                }
+            }
+
+            function startQuiz() {
+                currentQuestionIndex = 0;
+                initializeScores();
+                startScreen.classList.add('hidden');
+                resultsScreen.classList.add('hidden');
+                quizScreen.classList.remove('hidden');
+                displayQuestion();
+            }
+
+            function displayQuestion() {
+                const question = quizData.questions[currentQuestionIndex];
+                const progress = ((currentQuestionIndex + 1) / quizData.questions.length) * 100;
+                
+                progressBar.style.width = `${progress}%`;
+                questionText.textContent = question.text;
+                optionsContainer.innerHTML = '';
+
+                question.options.forEach(option => {
+                    const button = document.createElement('button');
+                    button.className = 'option-card text-lg text-gray-700 font-semibold';
+                    button.textContent = option.text;
+                    button.dataset.type = option.type;
+                    button.addEventListener('click', selectOption);
+                    optionsContainer.appendChild(button);
+                });
+            }
+
+            function selectOption(e) {
+                const selectedType = e.target.dataset.type;
+                if (scores[selectedType] !== undefined) {
+                    scores[selectedType]++;
+                }
+                
+                currentQuestionIndex++;
+                if (currentQuestionIndex < quizData.questions.length) {
+                    displayQuestion();
+                } else {
+                    showResults();
+                }
+            }
+
+            function showResults() {
+                const sortedScores = Object.keys(scores).sort((a,b) => scores[b] - scores[a]);
+                const resultType = sortedScores[0];
+                const result = quizData.results[resultType];
+                
+                resultTitle.textContent = result.title;
+                resultImage.src = result.image;
+                resultImage.alt = result.title;
+                resultDescription.textContent = result.description;
+
+                quizScreen.classList.add('hidden');
+                resultsScreen.classList.remove('hidden');
+            }
+
+            startBtn.addEventListener('click', startQuiz);
+            restartBtn.addEventListener('click', startQuiz);
+            
+            initializeScores();
+        });
+    </script>
+</body>
+</html>
